@@ -9,7 +9,6 @@ import sqlite3
 import random
 import datetime
 
-
 '''
  Date : 2016/04/20
  Time : 0150
@@ -36,7 +35,6 @@ DBC_nameName = 'name'
 DBC_responseName = 'response'
 DBC_timeName = 'time'
 DBC_titleName = 'title'
-
 
 class DelayTimeSet:
 ##    # DelayTime from page to page
