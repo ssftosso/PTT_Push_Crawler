@@ -13,6 +13,16 @@ from config import *
 from objects import *
 
 '''
+ Date : 2016/05/02
+ Time : 2350
+ Note :
+         Function:
+            > Add error exceptions
+            
+         Issue:
+            > Get response from reconnection but still get error
+            
+            
  Date : 2016/05/01
  Time : 1700
  Note :
@@ -20,8 +30,7 @@ from objects import *
             > Download push with random user-agent (DONE)
             > Store into DB (DONE)
             > Add memory release
-            > Add garbage collector
-         
+            > Add garbage collector         
 '''
 # enable auto collect the garbage
 gc.enable
@@ -49,30 +58,34 @@ def DatabaseInitial():
 
 
 def DBInsertPush(DBconnector, push):
-    
-    cmd = DBconnector.cursor()
-    CMD_InsertDB = ''
-    CMD_InsertDB = "INSERT INTO " + DB_TableName
-    CMD_InsertDB = CMD_InsertDB + "("
-    CMD_InsertDB = CMD_InsertDB + DBC_BoardName     + "," 
-    CMD_InsertDB = CMD_InsertDB + DBC_PostTitle     + "," 
-    CMD_InsertDB = CMD_InsertDB + DBC_TypeName      + "," 
-    CMD_InsertDB = CMD_InsertDB + DBC_AccountName   + ","
-    CMD_InsertDB = CMD_InsertDB + DBC_PushTime      + "," 
-    CMD_InsertDB = CMD_InsertDB + DBC_PushContent   + ") " 
-    CMD_InsertDB = CMD_InsertDB + "VALUES"
-    CMD_InsertDB = CMD_InsertDB + " (?,?,?,?,?,?)"
 
-    InsertValues = (push.Board,\
-                    push.Title,\
-                    push.Type,\
-                    push.Account,\
-                    push.Time,\
-                    push.Content)
+    try:
+        cmd = DBconnector.cursor()
+        CMD_InsertDB = ''
+        CMD_InsertDB = "INSERT INTO " + DB_TableName
+        CMD_InsertDB = CMD_InsertDB + "("
+        CMD_InsertDB = CMD_InsertDB + DBC_BoardName     + "," 
+        CMD_InsertDB = CMD_InsertDB + DBC_PostTitle     + "," 
+        CMD_InsertDB = CMD_InsertDB + DBC_TypeName      + "," 
+        CMD_InsertDB = CMD_InsertDB + DBC_AccountName   + ","
+        CMD_InsertDB = CMD_InsertDB + DBC_PushTime      + "," 
+        CMD_InsertDB = CMD_InsertDB + DBC_PushContent   + ") " 
+        CMD_InsertDB = CMD_InsertDB + "VALUES"
+        CMD_InsertDB = CMD_InsertDB + " (?,?,?,?,?,?)"
 
-    cmd.execute(CMD_InsertDB, InsertValues)
+        InsertValues = (push.Board,\
+                        push.Title,\
+                        push.Type,\
+                        push.Account,\
+                        push.Time,\
+                        push.Content)
 
-    DBconnector.commit()
+        cmd.execute(CMD_InsertDB, InsertValues)
+
+        DBconnector.commit()
+    except:
+        print "[ERROR] DB insert error. Start reinserting."
+        DBInsertPush(DBconnector, push)
 
 
 def DBInsertPushList(DBconnector, PushList):
@@ -114,40 +127,82 @@ def GetRandomUserAgent(UserAgentList):
     else:
         print "[ERROR][user-agent]: Get error value and reseting user-agent"
         GetRandomUserAgent(UserAgentList)
-    
 
-def WebConnector(URL, UserAgentList, Error = None ):
+def Reconnect(URL, UserAgentList, Error):
+    Error = DelayError(Error)
+    WebConnector(URL,UserAgentList, Error)
 
-    UserAgent = GetRandomUserAgent(UserAgentList)
-
-## Set header: user-agent
-    Headers = {
-        'user-agent':UserAgent
-        }
-
-    try:
-        Response = requests.get(URL, headers = Headers)
-    except:
-        # Reconnect by 2^N seconds
-        Error = DelayError(Error)
-##        if Error != None:
-##            Error.Delay()
-##            Error.Count = Error.Count + 1
-##        else:
-##            Error = ConnectError(1)
-            
-        WebConnector(URL,UserAgentList, Error)
-
-    htmlResponse = ''
-    
+def ReHtmlFormat(Response):
     try:
         htmlResponse = html.fromstring(Response.content)
         return htmlResponse
     except:
-        Error = DelayError(Error)
-        WebConnector(URL,UserAgentList, Error)
+        print "[ERROR][html.fromstring] Reformating"
+        ReHtmlFormat(Response)
     
-##    return html.fromstring(Response.content)
+
+def WebConnector(URL, UserAgentList, Error = None ):
+    
+    Response        = None
+    session         = None
+    htmlResponse    = None
+
+    UserAgent = GetRandomUserAgent(UserAgentList)
+
+    ## Set header: user-agent
+    if Error == None:
+        Headers = {
+            'user-agent':UserAgent,
+            'keep-alive':'False',
+            'Connection':'close'
+            }
+    else:
+        Headers = {
+            'user-agent':UserAgent,
+            }
+
+    try:
+        Response = requests.get(URL, headers = Headers)
+        if Error != None:
+            print Response.text
+##        if Error == None:
+##            Response = requests.get(URL, headers = Headers)
+##        else:
+##            print "[ERROR][Reconnect] Start session"
+##            session = requests.Session()
+##            session.get(URL)
+##            Response = session.get(URL, headers = Headers)
+##            print Response.text
+
+        try:
+            htmlResponse = html.fromstring(Response.text)
+            
+##            if session != None:
+##                ## close session connection
+##                session.connection.close()
+            
+            ## close connection
+            try:
+                Response.connection.close()
+            except:
+                print "[Error][Response] Response close fail"
+            
+            if (htmlResponse != None) & (htmlResponse != ''):
+                return htmlResponse
+            else:
+                print "[ERROR] Response is empty"
+                Reconnect(URL, UserAgentList, Error)
+                
+        except:
+            print "[ERROR] html.fromstring error"
+            Reconnect(URL, UserAgentList, Error)
+        
+    except:
+        print "[ERROR] Request fail"
+        Reconnect(URL, UserAgentList, Error)
+
+
+    
 
 def GetItemsFromResponse(Response, Pattern):
     return Response.xpath(Pattern)
@@ -179,6 +234,7 @@ def GetPushList(Response , target):
         PostTitle       = GetItemsFromResponse(Response, Pattern_TitleInSubPage)[0]
     except:
         PostTitle       = "TITLE ERROR"
+        
     PushTypeList        = GetItemsFromResponse(Response, Pattern_PushType)
     PushAccountList     = GetItemsFromResponse(Response, Pattern_PushAccount)
     PushContentList     = GetItemsFromResponse(Response, Pattern_PushContent)
@@ -246,14 +302,21 @@ def DownloadPush(target, DBconnector):
         for SubPageURL in SubPageURLList:
             SubResponse = WebConnector(URL=SubPageURL, UserAgentList=UserAgentList)
 
-            # Get Push LIST
-            PushList = GetPushList(SubResponse, target)
-
-            print "[ PushCount ] [" + str(len(PushList)) + " pushes ]"
+            # Get Title
+            try:
+                PostTitle   = GetItemsFromResponse(SubResponse, Pattern_TitleInSubPage)[0]
+            except:
+                PostTitle   = "-- Title Error --"
             
-            DBInsertPushList(DBconnector, PushList)
+            # Get Push LIST
+            PushList    = GetPushList(SubResponse, target)
+            
+            print "[Downloaded][Pushes: {:<5}] ".format(str(len(PushList))) + PostTitle
+
+            DBInsertPushList(DBconnector, PushList)            
 
             # release memory
+            del SubResponse
             del PushList
 
     PreURL = GetPrePageURL(Response)
@@ -262,6 +325,7 @@ def DownloadPush(target, DBconnector):
 
         # Memory garbage
         gc.collect()
+        del Response
         
         DownloadPush(target, DBconnector)
     

@@ -24,7 +24,7 @@ Pattern_PrePageName     = '//a[@class="btn wide"]/text()'
 
 #### Sub page content
 Pattern_SubPageTitle    = '//div[@class="title"]/a/text()'
-Pattern_TitleInSubPage  = '//*[@id="main-content"]/div[3]/span[2]/text()'
+Pattern_TitleInSubPage  = '//*[@id="main-content"]/div[3]/span[@class="article-meta-value"]/text()'
 
 #### Push content
 Pattern_PushType        = '//*[@id="main-content"]/div[@class="push"]/span[1]/text()'
