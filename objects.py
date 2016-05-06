@@ -65,6 +65,7 @@ def DelayError(Error = None):
         Error = ConnectError(1)
         return Error
 
-            
+def Delay(delaytime):
+    time.sleep(delaytime)   
 
     

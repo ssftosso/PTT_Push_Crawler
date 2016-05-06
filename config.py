@@ -16,6 +16,7 @@ DBC_BoardName   = "board"
 DBC_PushTime    = "pushtime"
 
 ## Delay time config
+ERROR_xpath_delay = 1
 
 ## Xpath pattern
 Pattern_SubPageURL      = '//div[@class="title"]/a/@href'

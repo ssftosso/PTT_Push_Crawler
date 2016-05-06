@@ -13,16 +13,32 @@ from config import *
 from objects import *
 
 '''
+ Date : 2016/05/05
+ Time : 1845
+ Note :
+         Function:
+            > Add more memory release
+            > Add more except
+
+ Date : 2016/05/03
+ Time : 1845
+ Note :
+         Function:
+            > Add memory release
+            > Add garbage collector
+            > fix except return function
+
+
  Date : 2016/05/02
  Time : 2350
  Note :
          Function:
             > Add error exceptions
-            
+
          Issue:
             > Get response from reconnection but still get error
-            
-            
+
+
  Date : 2016/05/01
  Time : 1700
  Note :
@@ -30,10 +46,12 @@ from objects import *
             > Download push with random user-agent (DONE)
             > Store into DB (DONE)
             > Add memory release
-            > Add garbage collector         
+            > Add garbage collector
 '''
 # enable auto collect the garbage
 gc.enable
+
+
 
 ## Database function
 def DatabaseInitial():
@@ -53,7 +71,7 @@ def DatabaseInitial():
     cmd.execute(CMD_CreateDB)
 
     conn.commit()
-
+    
     return conn
 
 
@@ -83,6 +101,10 @@ def DBInsertPush(DBconnector, push):
         cmd.execute(CMD_InsertDB, InsertValues)
 
         DBconnector.commit()
+        del DBconnector
+
+        # release memory
+        del push
     except:
         print "[ERROR] DB insert error. Start reinserting."
         DBInsertPush(DBconnector, push)
@@ -91,6 +113,9 @@ def DBInsertPush(DBconnector, push):
 def DBInsertPushList(DBconnector, PushList):
     for push in PushList:
         DBInsertPush(DBconnector, push)
+
+    # release memory
+    del PushList
         
 
 def DBSelectAll(DBconnector):
@@ -130,27 +155,27 @@ def GetRandomUserAgent(UserAgentList):
 
 def Reconnect(URL, UserAgentList, Error):
     Error = DelayError(Error)
-    WebConnector(URL,UserAgentList, Error)
+    return WebConnector(URL,UserAgentList, Error)
 
-def ReHtmlFormat(Response):
-    try:
-        htmlResponse = html.fromstring(Response.content)
-        return htmlResponse
-    except:
-        print "[ERROR][html.fromstring] Reformating"
-        ReHtmlFormat(Response)
-    
+##def ReHtmlFormat(Response):
+##    try:
+##        htmlResponse = html.fromstring(Response.content)
+##        return htmlResponse
+##    except:
+##        print "[ERROR][html.fromstring] Reformating"
+##        return ReHtmlFormat(Response)
+
 
 def WebConnector(URL, UserAgentList, Error = None ):
-    
     Response        = None
     session         = None
     htmlResponse    = None
 
     UserAgent = GetRandomUserAgent(UserAgentList)
-
-    ## Set header: user-agent
-    if Error == None:
+    del UserAgentList
+    
+    # Set header: user-agent
+    if Error is None:
         Headers = {
             'user-agent':UserAgent,
             'keep-alive':'False',
@@ -163,51 +188,45 @@ def WebConnector(URL, UserAgentList, Error = None ):
 
     try:
         Response = requests.get(URL, headers = Headers)
+
+        # for debug
         if Error != None:
             print Response.text
-##        if Error == None:
-##            Response = requests.get(URL, headers = Headers)
-##        else:
-##            print "[ERROR][Reconnect] Start session"
-##            session = requests.Session()
-##            session.get(URL)
-##            Response = session.get(URL, headers = Headers)
-##            print Response.text
 
         try:
             htmlResponse = html.fromstring(Response.text)
             
-##            if session != None:
-##                ## close session connection
-##                session.connection.close()
-            
-            ## close connection
             try:
                 Response.connection.close()
             except:
                 print "[Error][Response] Response close fail"
-            
+
             if (htmlResponse != None) & (htmlResponse != ''):
+                del Response
                 return htmlResponse
             else:
                 print "[ERROR] Response is empty"
-                Reconnect(URL, UserAgentList, Error)
-                
+                del Response
+                return Reconnect(URL, UserAgentList, Error)
         except:
             print "[ERROR] html.fromstring error"
-            Reconnect(URL, UserAgentList, Error)
-        
+            del Response
+            return Reconnect(URL, UserAgentList, Error)
     except:
         print "[ERROR] Request fail"
-        Reconnect(URL, UserAgentList, Error)
-
-
-    
+        return Reconnect(URL, UserAgentList, Error)
 
 def GetItemsFromResponse(Response, Pattern):
-    return Response.xpath(Pattern)
+    try:    
+        return Response.xpath(Pattern)
+    except:
+        print "[ERROR][xpath] Restarting GetItemsFromResponse"
+        Delay(ERROR_xpath_delay)
+        return GetItemsFromResponse(Response, Pattern)
 
 def TranslateIntoFullURL(shortURLList):
+    # Translate URL into Full URL
+    
     FullURLList = []
     ## Check shortURLList is list or string
     if isinstance(shortURLList, list) == True:
@@ -217,7 +236,10 @@ def TranslateIntoFullURL(shortURLList):
                 FullURLList.append(tmpFullURL)
     elif isinstance(shortURLList, str) == True:
         FullURLList = RootURL + shortURLList
-        
+
+    # release memory
+    del shortURLList
+    
     return FullURLList
 
 def ArrayInto1String(array):
@@ -256,7 +278,17 @@ def GetPushList(Response , target):
         newPush.Board       = target.BoardName
         
         PushList.append(newPush)
+
+        # release memory
         del newPush
+
+    # release memory
+    del PostTitle
+    del PushTypeList
+    del PushAccountList
+    del PushContentList
+    del PushTimeList
+    gc.collect()
     
     return PushList
 
@@ -274,6 +306,10 @@ def GetPrePageURL(response):
             FindPreURL = True
             PreURL = TranslateIntoFullURL(tmp_PreURLs[count])
 
+    # release memory
+    del tmp_PreURLs
+    del tmp_PreNames
+    
     if FindPreURL == False:
         print "------ End of Page ------"
         return None
@@ -290,43 +326,60 @@ def DownloadPush(target, DBconnector):
 
     #Get response
     Response = WebConnector(URL=TargetURL, UserAgentList=UserAgentList)
-
+    
     #Get Subpage title
     SubPageTitleList = GetItemsFromResponse(Response, Pattern_SubPageTitle)
     
     #Get Subpage url
     short_SubPageURLList = GetItemsFromResponse(Response, Pattern_SubPageURL)
-    if len(short_SubPageURLList) > 0:
-        SubPageURLList = TranslateIntoFullURL(short_SubPageURLList)
-        
-        for SubPageURL in SubPageURLList:
-            SubResponse = WebConnector(URL=SubPageURL, UserAgentList=UserAgentList)
 
-            # Get Title
-            try:
-                PostTitle   = GetItemsFromResponse(SubResponse, Pattern_TitleInSubPage)[0]
-            except:
-                PostTitle   = "-- Title Error --"
-            
-            # Get Push LIST
-            PushList    = GetPushList(SubResponse, target)
-            
-            print "[Downloaded][Pushes: {:<5}] ".format(str(len(PushList))) + PostTitle
+    try:
+        if len(short_SubPageURLList) > 0:
+            SubPageURLList = TranslateIntoFullURL(short_SubPageURLList)
 
-            DBInsertPushList(DBconnector, PushList)            
+
+            for SubPageURL in SubPageURLList:
+                SubResponse = WebConnector(URL=SubPageURL, UserAgentList=UserAgentList)
+                # Get Title
+                try:
+                    PostTitle   = GetItemsFromResponse(SubResponse, Pattern_TitleInSubPage)[0]
+                except:
+                    PostTitle   = "-- Title Error --"
+                
+                # Get Push LIST
+                PushList    = GetPushList(SubResponse, target)
+                
+                print "[Downloaded][Pushes: {:<5}] ".format(str(len(PushList))) + PostTitle
+
+                DBInsertPushList(DBconnector, PushList)            
+
+                # release memory
+                del SubResponse
+                del PushList
 
             # release memory
-            del SubResponse
-            del PushList
+            del SubPageURLList
 
-    PreURL = GetPrePageURL(Response)
-    if PreURL != None:
-        target.URL = PreURL
+        PreURL = GetPrePageURL(Response)
 
         # Memory garbage
-        gc.collect()
+        UserAgentList = None
+        del UserAgentList
+        Response = None
         del Response
-        
+        SubPageTitleList = None
+        del SubPageTitleList
+        short_SubPageURLList = None
+        del short_SubPageURLList
+        gc.collect()
+
+        if PreURL != None:
+            target.URL = PreURL
+            DownloadPush(target, DBconnector)
+
+    except:
+        print "[ERROR][DownloadPush] Restart DownloadPush"
+        del UserAgentList
         DownloadPush(target, DBconnector)
     
     
@@ -339,9 +392,12 @@ if __name__ == '__main__':
     # DB initial
     DBconnector = DatabaseInitial()
 
+##    # Load user-agent list
+##    UserAgentList = LoadUserAgentList()
+    
 ##    DBSelectAll(DBconnector)
     
-    DownloadPush(target, DBconnector)
+    DownloadPush(target, DBconnector )
 
     DBconnector.close()
     
