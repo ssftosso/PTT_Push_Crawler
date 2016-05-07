@@ -1,5 +1,8 @@
 # -*- coding: utf8 -*-
 
+## Show log
+Show_DetailLog = False
+
 ## URL config
 RootURL = "https://www.ptt.cc"
 
