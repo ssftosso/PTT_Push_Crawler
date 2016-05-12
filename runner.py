@@ -3,6 +3,7 @@ from item import *
 from lib import *
 from MessageHandler import *
 from config import *
+
 ##from ThreadHandler import *
 
 import thread, threading
@@ -34,15 +35,15 @@ if __name__ == '__main__':
             # For limit max num of threads
             DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
 
-            while DownloadThreadCount > MaxMultiThreadNum:
-                # If num of thread is bigger than MaxMultiThreadNum, then waiting for thread be free
-                DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
-                
+            while DownloadThreadCount >= MaxMultiThreadNum:
                 logmessage = "[Thread Wait] Num of Thread={:}, Wait {:} seconds".format(DownloadThreadCount, MaxMultiThreadNum_CheckDelay)
                 RunningLog(message=logmessage, level=0, module="MAIN")
 
                 # Wait for empty thread
-                objects.Delay(MaxMultiThreadNum_CheckDelay)
+                ErrorHandler.Delay(MaxMultiThreadNum_CheckDelay)
+
+                # If num of thread is bigger than MaxMultiThreadNum, then waiting for thread be free
+                DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
             
             # Creat and Start download push thread
             ThreadHandler.StartDownloadPushThread(threadID, target)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
             RunningLog(message="[Not fished thread count=]={:}, plz wait".format(DownloadThreadCount), level=0, module="MAIN")
 
             # for waiting all thread finished
-            objects.Delay(ThreadCountCheckDelay)
+            ErrorHandler.Delay(ThreadCountCheckDelay)
 
         RunningLog("All threads are finished","MAIN")
         

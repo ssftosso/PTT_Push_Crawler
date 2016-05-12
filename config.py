@@ -6,11 +6,17 @@
 RunningLogLevel = 2
 
 ## Multi-Thread set
-EnableMultiThread = True
-MaxMultiThreadNum = 5
+EnableMultiThread = False
+MaxMultiThreadNum = 3
 
-ThreadCountCheckDelay = 1 # for waiting all thread finished
-MaxMultiThreadNum_CheckDelay = 4
+ThreadCountCheckDelay           = 1 # for waiting all thread finished
+MaxMultiThreadNum_CheckDelay    = 1
+
+## DelayTime
+GetAndStorePushList_ErrorDelay = 2
+
+#### Delay time config
+ERROR_xpath_delay = 1
 
 ## URL config
 RootURL = "https://www.ptt.cc"
@@ -27,8 +33,7 @@ DBC_PostTitle   = "posttitle"
 DBC_BoardName   = "board"
 DBC_PushTime    = "pushtime"
 
-## Delay time config
-ERROR_xpath_delay = 1
+
 
 ## Xpath pattern
 Pattern_SubPageURL      = '//div[@class="title"]/a/@href'

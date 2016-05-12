@@ -6,6 +6,7 @@ from DBHandler import *
 from MessageHandler import *
 from StringHandler import *
 from ThreadHandler import *
+from ErrorHandler import *
 
 import random
 import re
@@ -13,8 +14,6 @@ from lxml import html, etree
 import requests
 import time
 
-
-tmpContent = ['22','dd','sssdf','xcvs']
 
 
 # Get user-agent list from file in folder: item
@@ -108,7 +107,7 @@ def WebConnector(URL, UserAgentList, Error = None ):
 
 def Reconnect(URL, UserAgentList, Error):
     ErrorLog("reconnecting")
-    Error = DelayError(Error)
+    Error = objects.DelayError(Error)
     return WebConnector(URL,UserAgentList, Error)
 
 
@@ -210,11 +209,14 @@ def GetPrePageURL_fromTarget(target, UserAgentList):
     try:
         WebResponse = WebConnector(target.URL, UserAgentList)
         PreURL      = GetPrePageURL_fromResponse(WebResponse)
+        return PreURL
     except:
-        ErrorLog("Get pre url fail","GetPrePageURL_fromTarget")
-        PreURL = None
+        ErrorLog("Get pre url fail. Restart.","GetPrePageURL_fromTarget")
+##        PreURL = None
+        return GetPrePageURL_fromTarget(target, UserAgentList)
         
-    return PreURL
+        
+    
 
 def GetPrePageURL_fromResponse(response):
 
@@ -235,6 +237,7 @@ def GetPrePageURL_fromResponse(response):
     del tmp_PreNames
     
     if FindPreURL == False:
+        
         RunningLog("------ End of Page ------")
         print "------ End of Page ------"
         return None
@@ -289,6 +292,7 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
                 del SubPageURLList_full[:]
             except:
                 ErrorLog("'for' loop for SubPage", "GetAndStorePushList")
+                
                 return GetAndStorePushList(response, UserAgentList, targetInfo)
 
 ##            # Memory garbage

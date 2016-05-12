@@ -3,6 +3,7 @@ import __init__
 import time
 from config import *
 from lib import MessageHandler
+import os
 
 ## Push
 class Push:
@@ -54,18 +55,19 @@ class ConnectError:
     def Delay(self):
         # Reconnect by 2^N seconds
         DelayTime = 2**self.Count
+        if DelayTime == 0:
+            DelayTime = 2
         ErrorLog("ErrorCount=" + str(self.Count) + " & Delaytime=" + str(DelayTime), "ConnectError")
-##        print "[ErrorCount]=" + str(self.Count) + " [Delaytime]=" + str(DelayTime)
         time.sleep(config.DelayTime)
 
 
-def DelayError(Error = None):
+def DelayError(Error):
     if Error != None:
         Error.Delay()
         Error.Count = Error.Count + 1
         return Error
     else:
-        Error = ConnectError(1)
+        Error = ConnectError(Count = 1)
         return Error
 
 def Delay(delaytime):
