@@ -12,20 +12,27 @@ import Queue
 class DownloadPushThread(threading.Thread):
     def __init__(self, threadID, target):
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.target = target
+        self.threadID   = threadID
+        self.target     = target
 
     def run(self):
         RunningLog(message = "Starting thread[{:}]".format(self.threadID), module = "DownloadPushThread", level=4)
 
-        DownloadPush(self.target)
+        try:
+            DownloadPush(self.target)
+        except:
+            ErrorLog("Restart run(self)","Class.DownloadPushThread")
+            run(self)
         
         RunningLog(message = "Stop thread[{:}]".format(self.threadID), module = "DownloadPushThread", level=4)
 
 def StartDownloadPushThread(threadID, target):
-    mthread = DownloadPushThread(threadID, target)
-    mthread.start()
-##    threadID = threadID + 1
+    try:
+        mthread = DownloadPushThread(threadID, target)
+        mthread.start()
+    except:
+        ErrorLog("Restart, target.URL={:}".format(target.URL),"StartDownloadPushThread")
+        StartDownloadPushThread(threadID, target)
     
 
 def ShowThreadCount():
@@ -33,10 +40,15 @@ def ShowThreadCount():
 
 
 def GetThreadCount():
-    result = threading.active_count()
+    result = 0 
+    try:
+        result = threading.active_count()
+    except:
+        ErrorLog("Get num of thread fail and set to 0","GetThreadCount")
     return result
 
 def GetDownloadThreadCount(BasicThreadCount):
-    result = threading.active_count() - BasicThreadCount
+    # For checking the thread used for download push
+    result = GetThreadCount() - BasicThreadCount
     return result
     

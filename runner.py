@@ -24,6 +24,7 @@ if __name__ == '__main__':
     # PreURL is for while loop checking
     PreURL = ''
 
+    # Thread ID not used yet.
     threadID = 0
 
     if EnableMultiThread == True:
@@ -34,9 +35,13 @@ if __name__ == '__main__':
             DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
 
             while DownloadThreadCount > MaxMultiThreadNum:
+                # If num of thread is bigger than MaxMultiThreadNum, then waiting for thread be free
                 DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
+                
                 logmessage = "[Thread Wait] Num of Thread={:}, Wait {:} seconds".format(DownloadThreadCount, MaxMultiThreadNum_CheckDelay)
                 RunningLog(message=logmessage, level=0, module="MAIN")
+
+                # Wait for empty thread
                 objects.Delay(MaxMultiThreadNum_CheckDelay)
             
             # Creat and Start download push thread
@@ -46,6 +51,7 @@ if __name__ == '__main__':
             PreURL = WebHandler.GetPrePageURL_fromTarget(target, UserAgentList)
                 
             # Asign new url to target
+            # Object:[target] will be reused in the while loop
             target.URL = PreURL
 
 
@@ -69,6 +75,8 @@ if __name__ == '__main__':
             PreURL = WebHandler.GetPrePageURL_fromTarget(target, UserAgentList)
             
             # Asign new url to target
+            # Object:[target] will be reused in the while loop
             target.URL = PreURL
+            
     
 

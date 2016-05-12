@@ -73,11 +73,14 @@ def DBInsertPush(DBconnector, push):
 
 
 def DBInsertPushList(DBconnector, PushList):
-    for push in PushList:
-        DBInsertPush(DBconnector, push)
+    try:
+        for push in PushList:
+            DBInsertPush(DBconnector, push)
 
-    # release memory
-    del PushList[:]; del PushList
+        # release memory
+        del PushList[:]; del PushList
+    except:
+        ErrorLog("Push list insert fail","DBInsertPushList")
 
 
 def DBSelectAll():
