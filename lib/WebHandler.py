@@ -150,6 +150,14 @@ def GetPushList(Response , target):
     PushList = []
 
     try:
+        PostAccount     = GetItemsFromResponse(Response, Pattern_PostAccountInSubPage)[0]
+        PostAccount     = PostAccount.split(' ')[0]        
+    except:
+        PostAccount     = "PostAccountError"
+
+    print PostAccount
+    
+    try:
         PostTitle       = GetItemsFromResponse(Response, Pattern_TitleInSubPage)[0]
     except:
         PostTitle       = "TITLE ERROR"
@@ -167,6 +175,7 @@ def GetPushList(Response , target):
 
             try:
                 newPush.Title       = PostTitle
+                newPush.PostAccount = PostAccount
                 newPush.Type        = PushTypeList[counter]
                 newPush.Account     = PushAccountList[counter]
                 

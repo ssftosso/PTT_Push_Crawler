@@ -8,6 +8,7 @@ import os
 ## Push
 class Push:
     Type        = ''
+    PostAccount = ''
     Account     = ''
     Content     = ''
     Time        = ''
@@ -15,24 +16,27 @@ class Push:
     Board       = ''
 
     def __init__(self, Type='',\
+                 PostAccount='',\
                  Account='',\
                  Content='',\
                  Time='',\
                  Title='',\
                  Board=''):
-        self.Type       = Type
-        self.Account    = Account
-        self.Content    = Content
-        self.Time       = Time
-        self.Title      = Title
-        self.Board      = Board
+        self.Type        = Type
+        self.Account     = Account
+        self.PostAccount = PostAccount 
+        self.Content     = Content
+        self.Time        = Time
+        self.Title       = Title
+        self.Board       = Board
 
     def show(self):
-        print "[" + self.Time + \
-              "] [" + self.Board +\
-              "] [" + self.Title +\
-              "] [" + self.Type +\
-              "] [" + self.Account +\
+        print "[" + self.Time           + \
+              "] [" + self.PostAccount  + \
+              "] [" + self.Board        + \
+              "] [" + self.Title        + \
+              "] [" + self.Type         + \
+              "] [" + self.Account      + \
               "]: " + self.Content
 
 # Target

@@ -16,6 +16,7 @@ def DatabaseInitial():
     CMD_CreateDB = CMD_CreateDB + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
     CMD_CreateDB = CMD_CreateDB + DBC_BoardName     + " text" + ","
     CMD_CreateDB = CMD_CreateDB + DBC_PostTitle     + " text" + ","
+    CMD_CreateDB = CMD_CreateDB + DBC_PostAccount   + " text" + ","
     CMD_CreateDB = CMD_CreateDB + DBC_TypeName      + " text" + ","
     CMD_CreateDB = CMD_CreateDB + DBC_AccountName   + " text" + ","
     CMD_CreateDB = CMD_CreateDB + DBC_PushTime      + " text" + ","
@@ -43,19 +44,21 @@ def DBInsertPush(DBconnector, push):
         CMD_InsertDB = "INSERT INTO " + DB_TableName
         CMD_InsertDB = CMD_InsertDB + "("
         CMD_InsertDB = CMD_InsertDB + DBC_BoardName     + "," 
-        CMD_InsertDB = CMD_InsertDB + DBC_PostTitle     + "," 
+        CMD_InsertDB = CMD_InsertDB + DBC_PostTitle     + ","
+        CMD_InsertDB = CMD_InsertDB + DBC_PostAccount   + "," 
         CMD_InsertDB = CMD_InsertDB + DBC_TypeName      + "," 
         CMD_InsertDB = CMD_InsertDB + DBC_AccountName   + ","
         CMD_InsertDB = CMD_InsertDB + DBC_PushTime      + "," 
         CMD_InsertDB = CMD_InsertDB + DBC_PushContent   + ") " 
         CMD_InsertDB = CMD_InsertDB + "VALUES"
-        CMD_InsertDB = CMD_InsertDB + " (?,?,?,?,?,?)"
+        CMD_InsertDB = CMD_InsertDB + " (?,?,?,?,?,?,?)"
 
-        InsertValues = (push.Board,\
-                        push.Title,\
-                        push.Type,\
-                        push.Account,\
-                        push.Time,\
+        InsertValues = (push.Board      ,\
+                        push.Title      ,\
+                        push.PostAccount,\
+                        push.Type       ,\
+                        push.Account    ,\
+                        push.Time       ,\
                         push.Content)
 
         cmd.execute(CMD_InsertDB, InsertValues)
@@ -86,8 +89,16 @@ def DBInsertPushList(DBconnector, PushList):
 def DBSelectAll():
     DBconnector = GetDBconector()
     cmd = DBconnector.cursor()
-    CMD_SelectAll = "SELECT content FROM " + DB_TableName
+    CMD_SelectAll = "SELECT * FROM " + DB_TableName
     for row in cmd.execute(CMD_SelectAll):
-        print row[0]
+##        message = ''
+##        for r in row:
+##            message = message + " " + str(r).encode('utf-8')
+
+        message = "[{:}] [{:}] [{:}] [{:<15}] {:}".format(row[1],row[3].encode('utf-8'),row[4].encode('utf-8'),row[5].encode('utf-8'),row[7].encode('utf-8'))
+
+        print message
+        
+        
 
     DBconnector.close()

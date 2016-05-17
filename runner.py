@@ -1,3 +1,4 @@
+#coding=utf-8
 # -*- coding: utf8 -*-
 from item import *
 from lib import *
@@ -13,7 +14,7 @@ import thread, threading
 if __name__ == '__main__':
     DBHandler.DatabaseInitial()
 
-    target = objects.Target("https://www.ptt.cc/bbs/StupidClown/index.html", "StupidClown")
+    target = objects.Target("https://www.ptt.cc/bbs/StupidClown/index3.html", "StupidClown")
 
 
     BasicThreadCount = ThreadHandler.GetThreadCount()
@@ -79,5 +80,6 @@ if __name__ == '__main__':
             # Object:[target] will be reused in the while loop
             target.URL = PreURL
             
-    
+
+##    DBHandler.DBSelectAll()
 
