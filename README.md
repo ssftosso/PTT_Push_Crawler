@@ -1,7 +1,11 @@
 # PTT Push Crawler
 ## Introduction
 
-This crawler can download all push of PTT posts. I've successly download all push of board "StupidClown" and the next goal is download all PTT push. 
+This crawler can download all push of PTT posts. 
+
+PTT : https://www.ptt.cc/hotboard.html 
+
+I've successly download all push of board "StupidClown" and the next goal is download all PTT push. 
 
 這隻爬蟲可以下載PTT文章的所有推文。 目前已經可以成功下載笨板的所有推文，下一個目標，是要下載所有的PTT推文。
 
