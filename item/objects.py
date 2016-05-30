@@ -5,6 +5,7 @@ from config import *
 from lib import MessageHandler
 import os
 
+
 ## Push
 class Push:
     Type        = ''
@@ -61,7 +62,7 @@ class ConnectError:
         DelayTime = 2**self.Count
         if DelayTime == 0:
             DelayTime = 2
-        ErrorLog("ErrorCount=" + str(self.Count) + " & Delaytime=" + str(DelayTime), "ConnectError")
+        MessageHandler.ErrorLog("ErrorCount=" + str(self.Count) + " & Delaytime=" + str(DelayTime), "ConnectError")
         time.sleep(config.DelayTime)
 
 

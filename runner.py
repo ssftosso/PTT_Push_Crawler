@@ -1,20 +1,22 @@
-#coding=utf-8
 # -*- coding: utf8 -*-
 from item import *
 from lib import *
 from MessageHandler import *
 from config import *
+from pattern import *
+
+import datetime
 
 ##from ThreadHandler import *
 
 import thread, threading
 
-
+StartTimeFlag = datetime.datetime.now()
 
 if __name__ == '__main__':
     DBHandler.DatabaseInitial()
 
-    target = objects.Target("https://www.ptt.cc/bbs/StupidClown/index3.html", "StupidClown")
+    target = objects.Target("https://www.ptt.cc/bbs/StupidClown/index.html", "StupidClown")
 
 
     BasicThreadCount = ThreadHandler.GetThreadCount()
@@ -60,7 +62,7 @@ if __name__ == '__main__':
         while threadCount is not 0:
             # Get thread num of download threads            
             DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
-            RunningLog(message="[Not fished thread count=]={:}, plz wait".format(DownloadThreadCount), level=0, module="MAIN")
+            RunningLog(message="[Not fished thread count=] {:}, plz wait".format(DownloadThreadCount), level=0, module="MAIN")
 
             # for waiting all thread finished
             ErrorHandler.Delay(ThreadCountCheckDelay)
@@ -79,7 +81,11 @@ if __name__ == '__main__':
             # Asign new url to target
             # Object:[target] will be reused in the while loop
             target.URL = PreURL
-            
 
-##    DBHandler.DBSelectAll()
+        
+    EndTimeFlag = datetime.datetime.now()
+
+    RunningLog(message=" Total running time: {:}".format(EndTimeFlag-StartTimeFlag), level=0, module="MAIN")
+##DBHandler.DBSelectAll()
+
 

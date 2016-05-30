@@ -1,6 +1,10 @@
 # -*- coding: utf8 -*-
 import __init__ 
 from config import *
+
+from pattern import WebPattern
+from WebPattern import *
+
 from item import *
 from DBHandler import *
 from MessageHandler import *
@@ -16,11 +20,12 @@ import time
 
 
 
+
 # Get user-agent list from file in folder: item
 # return list
-def LoadUserAgentList():
+def LoadUserAgentList(UserAgentList_filePath = UserAgentList_Path):
     # UserAgentList_Path is in config
-    op = open(UserAgentList_Path, 'r')
+    op = open(UserAgentList_filePath, 'r')
 
     UserAgentList = []
     for line in op:
@@ -73,17 +78,24 @@ def WebConnector(URL, UserAgentList, Error = None ):
             }
 
     RunningLog("Set header", "WebConnector")
-    
-    try:
-        Response = requests.get(URL, headers = Headers)
 
-        # for debug
+
+    Response = requests.get(URL, headers = Headers)
+    hr = html.fromstring(GetContentWithCorrectEncode(Response))
+
+    try:
+    
+##    try:
+##        Response = requests.get(URL, headers = Headers)
+
         if Error != None:
-            print Response.text
+            ErrorLog("Response","WebConnector")
 
         try:
-            htmlResponse = html.fromstring(Response.text)
-            
+            # check encode:
+            # StringHandler.GetContentWithEncode
+            htmlResponse = html.fromstring(GetContentWithCorrectEncode(Response))
+##            htmlResponse = html.fromstring(Response.text)
             try:
                 Response.connection.close()
             except:
@@ -155,7 +167,6 @@ def GetPushList(Response , target):
     except:
         PostAccount     = "PostAccountError"
 
-    print PostAccount
     
     try:
         PostTitle       = GetItemsFromResponse(Response, Pattern_TitleInSubPage)[0]
@@ -332,3 +343,4 @@ def DownloadPush(target):
     
     GetAndStorePushList(Response, UserAgentList, targetInfo=target)
     
+
