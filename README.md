@@ -54,7 +54,9 @@ Crawler ┬─ runner.py                    : main function
 
 ### Database schema
 Database platform: sqlite
+
 note: useful sqlite browser tool http://sqlitebrowser.org/
+
 ```
 STORE.db ─ PushList ┬─ type             : push type. Include 推、噓...
                     ├─ account          : push account
