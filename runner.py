@@ -15,10 +15,6 @@ runner [-u] [-d] [-s|-m|-a] [-b URL]
 -p, --update-post-list  : Update URL list file which list all post URL
                           under each board in /data. Enter URL of board
                           or use "all" to update from PTTURLList.txt.
--s, --single            : Single board url
--m, --multi             : Multi board url
--a, --all               : All board from list in PTTURLList.txt updated
-                          by -u(--update-board-list)
 -b, --boardURL          : Select board you want to download and use ','
                           as multi url split or use "all" to download
                           all push of PTT.
@@ -84,12 +80,12 @@ if __name__ == '__main__':
                             tmpfilepath = URLListFileRootPath + "\\" + filename
                             Downloader.DownloadBoardPushFromFile(tmpfilepath)
 
-            elif opt in ("-a", "--all"):
-                cAll = True
-                listop = open(ResultFilePath, 'r')
-                for url in listop:
-                    url = url.replace('\n','')
-                    Downloader.DownloadSingleBoardPush(url)
+##            elif opt in ("-a", "--all"):
+##                cAll = True
+##                listop = open(ResultFilePath, 'r')
+##                for url in listop:
+##                    url = url.replace('\n','')
+##                    Downloader.DownloadSingleBoardPush(url)
 
                 listop.close()
         if len(opts) == 0:
