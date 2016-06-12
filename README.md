@@ -8,6 +8,7 @@ PTT : https://www.ptt.cc/hotboard.html
 ### Command
 使用基本順序：
         ``` [-u] => [-p all] => [-b all] ```
+
 註：目前尚無法得知全部下載所需時間，可能需要數天。
 
 ```
