@@ -36,50 +36,50 @@ if __name__ == '__main__':
     cAll        = False
     cUpdateBL   = False #update-board-list
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "dahup:b:", ["help", \
+##    try:
+    opts, args = getopt.getopt(sys.argv[1:], "dahup:b:", ["help", \
                                                             "update-board-list", \
                                                             "update-post-list=", \
                                                             "download", \
                                                             "all" ,\
                                                             "boardURL="])
-        for opt, arg in opts:
-            if opt in ("-h", "--help"):
-                help_info()
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            help_info()
+        if opt in ("-u", "--update-board-list"):
+            cUpdateBL = True
+            MessageHandler.RunningLog("Updating board list...","MAIN", level=1)
+            # /tool
+            DownloadBoardList.DownloadBoardList()
+            MessageHandler.RunningLog("Board list updated.","MAIN", level=1)
 
-            if opt in ("-u", "--update-board-list"):
-                cUpdateBL = True
-                MessageHandler.RunningLog("Updating board list...","MAIN", level=1)
-                Downloader.DownloadBoardList()
-                MessageHandler.RunningLog("Board list updated.","MAIN", level=1)
+        if opt in ("-p", "--update-post-list"):
+            cPostURL = arg
+            if cPostURL != "all":
+                for url in GetUrlList(cPostURL):
+                    Downloader.UpdateUrlList(url)
+            else:
+                print ResultFilePath
+                top = open(ResultFilePath,'r')
+                for url in top.readlines():
+                    url = url.replace('\n','')
+                    Downloader.UpdateUrlList(url)
 
-            elif opt in ("-p", "--update-post-list"):
-                cPostURL = arg
-                if cPostURL != "all":
-                    for url in GetUrlList(cPostURL):
-                        Downloader.UpdateUrlList(url)
-                else:
-                    print ResultFilePath
-                    top = open(ResultFilePath,'r')
-                    for url in top.readlines():
-                        url = url.replace('\n','')
-                        Downloader.UpdateUrlList(url)
-
-            elif opt in ("-b", "--boardURL="):
-                cBoardURL = arg
-                if cBoardURL != 'all':
-                    for url in GetUrlList(cBoardURL):
-                        target = objects.Target(url, WebHandler.GetBoardName(url))
-                        Downloader.DownloadSingleBoardPush(url)
-                        MessageHandler.RunningLog("Download Finished: {:}".format(target.BoardName),"MAIN", level=1)
-                elif cBoardURL == 'all':
-                    PostUrlList = os.listdir(URLListFileRootPath)
-                    for filename in PostUrlList:
-                        if re.search("\d{5}tmp", filename) is None:
-                            # Except tmp file in Downloader.CopyTmpFile
-                            tmpfilepath = URLListFileRootPath + "\\" + filename
-                            Downloader.DownloadBoardPushFromFile(tmpfilepath)
-
+        if opt in ("-b", "--boardURL="):
+            cBoardURL = arg
+            if cBoardURL != 'all':
+                for url in GetUrlList(cBoardURL):
+                    target = objects.Target(url, WebHandler.GetBoardName(url))
+                    Downloader.DownloadSingleBoardPush(url)
+                    MessageHandler.RunningLog("Download Finished: {:}".format(target.BoardName),"MAIN", level=1)
+            elif cBoardURL == 'all':
+                PostUrlList = os.listdir(URLListFileRootPath)
+                for filename in PostUrlList:
+                    if re.search("\d{5}tmp", filename) is None:
+                        # Except tmp file in Downloader.CopyTmpFile
+                        tmpfilepath = URLListFileRootPath + "\\" + filename
+                        Downloader.DownloadBoardPushFromFile(tmpfilepath)
+            
 ##            elif opt in ("-a", "--all"):
 ##                cAll = True
 ##                listop = open(ResultFilePath, 'r')
@@ -90,10 +90,9 @@ if __name__ == '__main__':
                 listop.close()
         if len(opts) == 0:
             help_info()
-        print opts
         MessageHandler.RunningLog("main function done","MAIN", level=1)
-    except:
-        help_info()
+##    except:
+##        help_info()
 
 
 ##DBHandler.DBSelectAll()
