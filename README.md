@@ -1,4 +1,5 @@
 # PTT Push Crawler
+use Python 2.7
 ## Introduction
 
 This crawler can download all push of PTT posts. 
