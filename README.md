@@ -6,7 +6,7 @@ This crawler can download all push of PTT posts.
 這隻爬蟲可以下載PTT文章的推文。
 
 
-### Command
+## Command
 使用基本順序：
         ``` [-u] => [-p all] => [-b all] ```
 
@@ -28,7 +28,7 @@ Example:
     runner -b all
 ```
 
-### File tree
+## File tree
 ```
 Crawler ┬─ runner.py                    : main function
         ├─ config.py                    : global setting
@@ -52,7 +52,7 @@ Crawler ┬─ runner.py                    : main function
                 └─ UserAgentList.txt    : browser user-agent list
 ```
 
-### Database schema
+## Database schema
 Database platform: sqlite
 
 note: useful sqlite browser tool http://sqlitebrowser.org/
