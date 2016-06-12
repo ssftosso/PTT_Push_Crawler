@@ -2,8 +2,9 @@
 ## Introduction
 
 This crawler can download all push of PTT posts. 
+
 這隻爬蟲可以下載PTT文章的推文。
-PTT : https://www.ptt.cc/hotboard.html 
+
 
 ### Command
 使用基本順序：
