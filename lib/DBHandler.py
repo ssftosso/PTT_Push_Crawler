@@ -7,11 +7,14 @@ from MessageHandler import *
 import sqlite3
 
 ## Database function
-def DatabaseInitial():
+def DatabaseInitial(BoardName):
+    #Here we use BoardName as database name
     # Create New Database
-    conn = GetDBconector()
+    conn = GetDBconector(BoardName)
     cmd = conn.cursor()
 
+    DatabasePath = DB_DatabaseRootPath + "/" + BoardName + ".db"
+    
     CMD_CreateDB = "CREATE TABLE IF NOT EXISTS " + DB_TableName
     CMD_CreateDB = CMD_CreateDB + " (id INTEGER PRIMARY KEY AUTOINCREMENT,"
     CMD_CreateDB = CMD_CreateDB + DBC_BoardName     + " text" + ","
@@ -28,10 +31,11 @@ def DatabaseInitial():
     RunningLog("Database initial done", level=2)
     conn.close()
 
-def GetDBconector():
+def GetDBconector(BoardName):
+    DatabasePath = DB_DatabaseRootPath + "\\" + BoardName + ".db"
     try:
-        return sqlite3.connect(DB_DatabaseName)
-    except:
+        return sqlite3.connect(DatabasePath)
+    except Exception:
         ErrorLog("DB connect fail", "GetDBconnector")
         return GetDBconnector()
 
@@ -70,7 +74,7 @@ def DBInsertPush(DBconnector, push):
         del push
         del DBconnector
         
-    except:
+    except Exception:
         ErrorLog("DB insert error. Start reinserting.", "DBInsertPush")
         DBInsertPush(DBconnector, push)
 
@@ -82,12 +86,12 @@ def DBInsertPushList(DBconnector, PushList):
 
         # release memory
         del PushList[:]; del PushList
-    except:
+    except Exception:
         ErrorLog("Push list insert fail","DBInsertPushList")
 
 
-def DBSelectAll():
-    DBconnector = GetDBconector()
+def DBSelectAll(BoardName):
+    DBconnector = GetDBconector(BoardName)
     cmd = DBconnector.cursor()
     CMD_SelectAll = "SELECT * FROM " + DB_TableName
     for row in cmd.execute(CMD_SelectAll):

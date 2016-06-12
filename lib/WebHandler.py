@@ -18,8 +18,11 @@ from lxml import html, etree
 import requests
 import time
 
+import signal
 
-
+def signal_handler(signal, frame):
+    RunningLog("Ctrl + c : stop process.", "Force Stop", level=0)
+    sys.exit(0)
 
 # Get user-agent list from file in folder: item
 # return list
@@ -57,12 +60,15 @@ def GetRandomUserAgent(UserAgentList):
     
 
 def WebConnector(URL, UserAgentList, Error = None ):
+    #ctrl + c : stop process
+    #from : ThreadHandler.py
+    signal.signal(signal.SIGINT, signal_handler)
+    
     Response        = None
     session         = None
     htmlResponse    = None
 
     UserAgent = GetRandomUserAgent(UserAgentList)
-    
     
     # Set header: user-agent
     if Error is None:
@@ -81,12 +87,10 @@ def WebConnector(URL, UserAgentList, Error = None ):
 
 
     Response = requests.get(URL, headers = Headers)
-    hr = html.fromstring(GetContentWithCorrectEncode(Response))
 
-    try:
     
-##    try:
-##        Response = requests.get(URL, headers = Headers)
+    try:
+        Response = requests.get(URL, headers = Headers)
 
         if Error != None:
             ErrorLog("Response","WebConnector")
@@ -98,7 +102,7 @@ def WebConnector(URL, UserAgentList, Error = None ):
 ##            htmlResponse = html.fromstring(Response.text)
             try:
                 Response.connection.close()
-            except:
+            except Exception:
                 ErrorLog("Response close fail", "Response")
 
             if (htmlResponse != None) & (htmlResponse != ''):
@@ -109,12 +113,15 @@ def WebConnector(URL, UserAgentList, Error = None ):
             else:
                 ErrorLog("Response is empty", "Response")
                 return Reconnect(URL, UserAgentList, Error)
-        except:
+        except Exception:
             ErrorLog("html.fromstring error", "html.fromstring")
             return Reconnect(URL, UserAgentList, Error)
-    except:
+    except Exception:
         ErrorLog("Request fail", "requests.get")
         return Reconnect(URL, UserAgentList, Error)
+
+    
+    
 
 
 def Reconnect(URL, UserAgentList, Error):
@@ -127,7 +134,7 @@ def GetItemsFromResponse(Response, Pattern):
     try:
         RunningLog("get xpath from response", "GetItemsFromResponse")
         return Response.xpath(Pattern)
-    except:
+    except Exception:
         ErrorLog("Restarting GetItemsFromResponse", "GetItemsFromResponse")
         Delay(ERROR_xpath_delay)
         return GetItemsFromResponse(Response, Pattern)
@@ -148,7 +155,7 @@ def TranslateIntoFullURL(relatedURLList):
                     FullURLList.append(tmpFullURL)
         elif isinstance(relatedURLList, str) == True:
             FullURLList = RootURL + relatedURLList
-    except:
+    except Exception:
         ErrorLog("Translate from releated into full url", "TranslateIntoFullURL")
 
     return FullURLList
@@ -164,13 +171,13 @@ def GetPushList(Response , target):
     try:
         PostAccount     = GetItemsFromResponse(Response, Pattern_PostAccountInSubPage)[0]
         PostAccount     = PostAccount.split(' ')[0]        
-    except:
+    except Exception:
         PostAccount     = "PostAccountError"
 
     
     try:
         PostTitle       = GetItemsFromResponse(Response, Pattern_TitleInSubPage)[0]
-    except:
+    except Exception:
         PostTitle       = "TITLE ERROR"
         
     PushTypeList        = GetItemsFromResponse(Response, Pattern_PushType)
@@ -193,13 +200,13 @@ def GetPushList(Response , target):
                 ## It will get string array for the response with href
                 try:
                     tmpContent          = PushContentList[counter].xpath('.//text()')
-                except:
+                except Exception:
                     ErrorLog("Get tempContent fail","GetPushList-tempContent")
 
                 try:
                     newPush.Content     = ArrayInto1String(tmpContent)
 ##                    newPush.Content = temp
-                except:
+                except Exception:
                     ErrorLog("Get content to push list fail","GetPushList-newPush.Content")
                 
                 newPush.Time        = PushTimeList[counter].replace('\n','')
@@ -207,14 +214,14 @@ def GetPushList(Response , target):
                 
                 PushList.append(newPush)
                 
-            except:
+            except Exception:
                 ErrorLog("Add new object into list","GetPushList-PushList.append")
 
             # release memory
             # del newPush
 
         
-    except:
+    except Exception:
         ErrorLog("'for' loop for getting push list fail", "GetPushList")
         return GetPushList(Response , target)
     # release memory
@@ -227,10 +234,11 @@ def GetPushList(Response , target):
 
 def GetPrePageURL_fromTarget(target, UserAgentList):
     try:
+        RunningLog("PreURL:{:}".format(target.URL), "GetPrePageURL_fromTarget", level=3)
         WebResponse = WebConnector(target.URL, UserAgentList)
         PreURL      = GetPrePageURL_fromResponse(WebResponse)
         return PreURL
-    except:
+    except Exception:
         ErrorLog("Get pre url fail. Restart.","GetPrePageURL_fromTarget")
 ##        PreURL = None
         return GetPrePageURL_fromTarget(target, UserAgentList)
@@ -258,8 +266,7 @@ def GetPrePageURL_fromResponse(response):
     
     if FindPreURL == False:
         
-        RunningLog("------ End of Page ------")
-        print "------ End of Page ------"
+        RunningLog("------ End of Board ------","GetPrePageURL_fromResponse", level=2)
         return None
     else:
         RunningLog("PreURL:{:}".format(PreURL), "GetPrePageURL_fromResponse")
@@ -275,7 +282,7 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
     SubPageURLList_related = GetItemsFromResponse(response, Pattern_SubPageURL)
 
     # Set database connector
-    DBconnector = GetDBconector()
+    DBconnector = GetDBconector(targetInfo.BoardName)
 
     try:
         if len(SubPageURLList_related) > 0:
@@ -288,7 +295,7 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
                     # Get Title
                     try:
                         PostTitle   = GetItemsFromResponse(SubResponse, Pattern_TitleInSubPage)[0]
-                    except:
+                    except Exception:
                         PostTitle   = "-- Title Error --"
 
                     try:
@@ -303,14 +310,14 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
 
                         # release list
                         del PushList
-                    except:
+                    except Exception:
                         ErrorLog("PushList fail", "GetAndStorePushList")
                         return GetAndStorePushList(response, UserAgentList, targetInfo)
                         
 
                 # release memory
                 del SubPageURLList_full[:]
-            except:
+            except Exception:
                 ErrorLog("'for' loop for SubPage", "GetAndStorePushList")
                 
                 return GetAndStorePushList(response, UserAgentList, targetInfo)
@@ -318,7 +325,7 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
 ##            # Memory garbage
 ##            del SubPageURLList_full[:]
 
-    except:
+    except Exception:
         ErrorLog("Restart DownloadPush", "GetAndStorePushList")
         return GetAndStorePushList(response, UserAgentList, targetInfo)
 
@@ -328,15 +335,29 @@ def GetAndStorePushList(response, UserAgentList, targetInfo):
 
 
 
+def GetBoardName(URL):
+    try:
+        BoardName = URL.split('/')[4]
+        RunningLog("Board name: {:}".format(URL), level=5)
+    except Exception:
+        BoardName = "ERROR"
+        ErrorLog("Error board name", "GetBoardName")
+        
+    return BoardName
+
+
 def DownloadPush(target):
 
+    
+    
     TargetURL = target.URL
     
     RunningLog("Target:{:}".format(TargetURL), level=0)
-    
+
+
     # Get Header List
     UserAgentList = LoadUserAgentList()
-
+    
     #Get response
     Response = WebConnector(URL=TargetURL, UserAgentList=UserAgentList)
     

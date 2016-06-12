@@ -1,91 +1,105 @@
 # -*- coding: utf8 -*-
 from item import *
 from lib import *
-from MessageHandler import *
+from tool import *
 from config import *
-from pattern import *
 
-import datetime
+import sys,getopt
+import re
 
-##from ThreadHandler import *
+def help_info():
+    print '''
+runner [-u] [-d] [-s|-m|-a] [-b URL]
 
-import thread, threading
+-u, --update-board-list : Update all board url list
+-p, --update-post-list  : Update URL list file which list all post URL
+                          under each board in /data. Enter URL of board
+                          or use "all" to update from PTTURLList.txt.
+-s, --single            : Single board url
+-m, --multi             : Multi board url
+-a, --all               : All board from list in PTTURLList.txt updated
+                          by -u(--update-board-list)
+-b, --boardURL          : Select board you want to download and use ','
+                          as multi url split or use "all" to download
+                          all push of PTT.
+Example:
+    runner -p https://www.ptt.cc/bbs/Announce/index.html
+    runner -p all
+    runner -b https://www.ptt.cc/bbs/Announce/index.html
+    runner -b all
 
-StartTimeFlag = datetime.datetime.now()
+'''
 
+def GetUrlList(URLarray):
+    result = URLarray.split(',')
+    return result
+    
 if __name__ == '__main__':
-    DBHandler.DatabaseInitial()
+    cDownload   = False
+    cBoardURL   = None
+    cAll        = False
+    cUpdateBL   = False #update-board-list
 
-    target = objects.Target("https://www.ptt.cc/bbs/StupidClown/index.html", "StupidClown")
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "dahup:b:", ["help", \
+                                                            "update-board-list", \
+                                                            "update-post-list=", \
+                                                            "download", \
+                                                            "all" ,\
+                                                            "boardURL="])
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                help_info()
+
+            if opt in ("-u", "--update-board-list"):
+                cUpdateBL = True
+                MessageHandler.RunningLog("Updating board list...","MAIN", level=1)
+                Downloader.DownloadBoardList()
+                MessageHandler.RunningLog("Board list updated.","MAIN", level=1)
+
+            elif opt in ("-p", "--update-post-list"):
+                cPostURL = arg
+                if cPostURL != "all":
+                    for url in GetUrlList(cPostURL):
+                        Downloader.UpdateUrlList(url)
+                else:
+                    print ResultFilePath
+                    top = open(ResultFilePath,'r')
+                    for url in top.readlines():
+                        url = url.replace('\n','')
+                        Downloader.UpdateUrlList(url)
+
+            elif opt in ("-b", "--boardURL="):
+                cBoardURL = arg
+                if cBoardURL != 'all':
+                    for url in GetUrlList(cBoardURL):
+                        target = objects.Target(url, WebHandler.GetBoardName(url))
+                        Downloader.DownloadSingleBoardPush(url)
+                        MessageHandler.RunningLog("Download Finished: {:}".format(target.BoardName),"MAIN", level=1)
+                elif cBoardURL == 'all':
+                    PostUrlList = os.listdir(URLListFileRootPath)
+                    for filename in PostUrlList:
+                        if re.search("\d{5}tmp", filename) is None:
+                            # Except tmp file in Downloader.CopyTmpFile
+                            tmpfilepath = URLListFileRootPath + "\\" + filename
+                            Downloader.DownloadBoardPushFromFile(tmpfilepath)
+
+            elif opt in ("-a", "--all"):
+                cAll = True
+                listop = open(ResultFilePath, 'r')
+                for url in listop:
+                    url = url.replace('\n','')
+                    Downloader.DownloadSingleBoardPush(url)
+
+                listop.close()
+        if len(opts) == 0:
+            help_info()
+        print opts
+        MessageHandler.RunningLog("main function done","MAIN", level=1)
+    except:
+        help_info()
 
 
-    BasicThreadCount = ThreadHandler.GetThreadCount()
-    threadCount = 0
-
-    # Get user-agent list
-    UserAgentList = WebHandler.LoadUserAgentList()
-
-    # PreURL is for while loop checking
-    PreURL = ''
-
-    # Thread ID not used yet.
-    threadID = 0
-
-    if EnableMultiThread == True:
-        # for multi-thread
-        while PreURL is not None:
-            # Get num of download threads
-            # For limit max num of threads
-            DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
-
-            while DownloadThreadCount >= MaxMultiThreadNum:
-                logmessage = "[Thread Wait] Num of Thread={:}, Wait {:} seconds".format(DownloadThreadCount, MaxMultiThreadNum_CheckDelay)
-                RunningLog(message=logmessage, level=0, module="MAIN")
-
-                # Wait for empty thread
-                ErrorHandler.Delay(MaxMultiThreadNum_CheckDelay)
-
-                # If num of thread is bigger than MaxMultiThreadNum, then waiting for thread be free
-                DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
-            
-            # Creat and Start download push thread
-            ThreadHandler.StartDownloadPushThread(threadID, target)
-                
-            # Get pre url
-            PreURL = WebHandler.GetPrePageURL_fromTarget(target, UserAgentList)
-                
-            # Asign new url to target
-            # Object:[target] will be reused in the while loop
-            target.URL = PreURL
-
-
-        while threadCount is not 0:
-            # Get thread num of download threads            
-            DownloadThreadCount = ThreadHandler.GetDownloadThreadCount(BasicThreadCount)
-            RunningLog(message="[Not fished thread count=] {:}, plz wait".format(DownloadThreadCount), level=0, module="MAIN")
-
-            # for waiting all thread finished
-            ErrorHandler.Delay(ThreadCountCheckDelay)
-
-        RunningLog("All threads are finished","MAIN")
-        
-    elif EnableMultiThread == False:
-        while PreURL is not None:
-
-            # Start download push
-            WebHandler.DownloadPush(target)
-
-            # Get pre url
-            PreURL = WebHandler.GetPrePageURL_fromTarget(target, UserAgentList)
-            
-            # Asign new url to target
-            # Object:[target] will be reused in the while loop
-            target.URL = PreURL
-
-        
-    EndTimeFlag = datetime.datetime.now()
-
-    RunningLog(message=" Total running time: {:}".format(EndTimeFlag-StartTimeFlag), level=0, module="MAIN")
 ##DBHandler.DBSelectAll()
 
 

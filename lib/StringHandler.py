@@ -11,7 +11,7 @@ def ArrayInto1String(array):
     try:
         for item in array:
             result = result + item
-    except:
+    except Exception:
         ErrorLog("Combine into one string fail","ArrayInto1String")
 
     return result

@@ -2,7 +2,6 @@
 import __init__ 
 from config import *
 
-
 def LogType(logtype):
     mes = "[{:^7}] ".format(logtype)
     return mes
@@ -13,7 +12,7 @@ def RunningLog(message, module = None, level= 5):
     # down: 5 (default)
     
     mes = LogType("LOG")
-    if module != None:
+    if (module != None) & (RunningLogDisplayModule is True):
         mes = mes + "[" + module + "] "
     mes = mes + message
 

@@ -20,25 +20,35 @@ ParentFolderPath        = os.path.abspath(os.path.join(CurrentFolder, os.pardir)
 UserAgentListFilePath   = ParentFolderPath + "\\" + UserAgentList_Path.replace('/','\\')
 
 
-def StoreResult(ResultURL):
+def StoreResult(Result_fopw, ResultURL):
     # Write into Result file
     Result_fopw.write(ResultURL + '\r\n')
 
 def exeLog(message, module, level=5):
     mes = MessageHandler.RunningLog(message,module, level=level)
-    if mes != None:
-        Log_fopw.write(mes)
-        Log_fopw.write('\r\n')
+##    if mes != None:
+##        Log_fopw.write(mes)
+##        Log_fopw.write('\r\n')
 
 def error(message, module):
     mes = MessageHandler.ErrorLog(message, module)
-    Log_fopw.write(mes)
-    Log_fopw.write('\r\n')
+##    Log_fopw.write(mes)
+##    Log_fopw.write('\r\n')
 
-def GetAllBoardLink(target, UserAgentList):
+def GetAllBoardLink(Result_fopw, target, UserAgentList):
+    response = None
+    hreflist = None
+    try:
+        response = WebConnector(target, UserAgentList)
+    except Exception:
+        error("Connect fail", "WebConnector")
+        response = WebConnector(target, UserAgentList)
 
-    response = WebConnector(target, UserAgentList)
-    hreflist = GetItemsFromResponse(response, Pattern_GetHref)
+    try:
+        hreflist = GetItemsFromResponse(response, Pattern_GetHref)
+    except Exception:
+        error("Get item fail", "GetItemsFromResponse")
+        hreflist = GetItemsFromResponse(response, Pattern_GetHref)
 
     if len(hreflist) > 0:
         
@@ -53,19 +63,19 @@ def GetAllBoardLink(target, UserAgentList):
                 if UpdateDownloadURLList(tmpURL) == True:
                     if href.find('index.html') > -1:
                         # Get url of board
-                        exeLog("Got board link: {:}".format(tmpURL), "GetAllBoardLink", 2)
-                        StoreResult(tmpURL)
+                        exeLog("board link: {:}".format(tmpURL), "GetAllBoardLink", 2)
+                        StoreResult(Result_fopw, tmpURL)
                     elif href.find('/1.html') > -1:
                         exeLog("Ignore tree root: {:}".format(tmpURL), "GetAllBoardLink", 2)
                     else:
                         # Get url of sub list page
-                        exeLog("Got list page link: {:}".format(tmpURL), "GetAllBoardLink", 3)
+                        exeLog("list page link: {:}".format(tmpURL), "GetAllBoardLink", 3)
 
                         try:
-                            GetAllBoardLink(tmpURL, UserAgentList)
-                        except:
+                            GetAllBoardLink(Result_fopw, tmpURL, UserAgentList)
+                        except Exception:
                             error("Restart download : {:}".format(tmpURL), "GetAllBoardLink")
-                            GetAllBoardLink(tmpURL, UserAgentList)
+                            GetAllBoardLink(Result_fopw, tmpURL, UserAgentList)
 
 
 def GetBoardName(URL):
@@ -77,11 +87,11 @@ def CheckIfNameInList(checkName, nameList):
     result = False
     for name in nameList:
         if checkName == name:
-            exeLog("URL is already in list", "CheckIfNameInList", 4)
+            exeLog("URL is already in list", "CheckIfNameInList", 5)
             result = True
             return result
         else:
-            exeLog("URL is not in list", "CheckIfNameInList", 4)
+            exeLog("URL is not in list", "CheckIfNameInList", 5)
             result = False
             
     return result
@@ -103,20 +113,22 @@ def UpdateDownloadURLList(URL):
     return result
    
 
-if __name__ == '__main__':
-    
+##if __name__ == '__main__':
+def DownloadBoardList():
     Result_fopw = open(ResultFilePath, 'wb')
-    Log_fopw    = open(LogFilePath, 'wb')
+##    Log_fopw    = open(LogFilePath, 'wb')
 
-    
     exeLog("Get user-agent list", "Main", 2 )
-    UserAgentList   = LoadUserAgentList(UserAgentListFilePath)
-    
+    UserAgentList   = LoadUserAgentList(UserAgentList_Path)
+        
     exeLog("Start download url", "Main", 2 )
     exeLog("Start from : {:}".format(PttTreeStart), "Main", 2 )
-    GetAllBoardLink(PttTreeStart, UserAgentList)
+    GetAllBoardLink(Result_fopw, PttTreeStart, UserAgentList)
+    
 
     Result_fopw.close()
-    Log_fopw.close()
 
-##    GetBoardName(PttTreeStart)
+    exeLog("Board list updated. DONE", "Main", 2 )
+##    Log_fopw.close()
+
+
